@@ -20,10 +20,6 @@
       <button class="add-to-cart" @click="addToCart()">Add to cart</button>
     </div>
     <div class="top-row">
-        <!-- <div class="robot-name">
-          {{selectedRobot.head.title}}
-          <span v-if="selectedRobot.head.onSale" class="sale">Sale!</span>
-        </div> -->
          <PartSelector :parts="availableParts.heads" position="top" @partSelected="part => selectedRobot.head = part"/>
     </div>
     <div class="middle-row">
@@ -33,24 +29,6 @@
     </div>
     <div class="bottom-row">
       <PartSelector :parts="availableParts.bases" position="bottom" @partSelected="part => selectedRobot.base = part"/>
-    </div>
-    <div>
-      <h1>Cart</h1>
-      <table>
-        <caption></caption>
-        <thead>
-          <tr>
-            <th scope="">Robot</th>
-            <th class="cost" scope="">Cost</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(robot, index) in cart" :key="index">
-            <td>{{robot.head.title}}</td>
-            <td class="cost">{{robot.cost}}</td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </div>
 </template>
@@ -62,10 +40,21 @@ import CollapsibleSection from '../shared/CollapsibleSection.vue';
 
 export default {
   name: 'RobotBuilder',
+  beforeRouteLeave(to, from, next) {
+    if (this.addedToCart) {
+      next(true);
+    } else {
+      /* eslint no-restricted-globals: 0 */
+      /* eslint no-alert: 0 */
+      const response = confirm('You have not added robot to cart, are you sure you want to leave?');
+      next(response);
+    }
+  },
   components: { PartSelector, CollapsibleSection },
   data() {
     return {
       availableParts,
+      addedToCart: false,
       cart: [],
       selectedRobot: {
         head: {},
@@ -86,7 +75,8 @@ export default {
       const robot = this.selectedRobot;
       const cost = robot.head.cost + robot.leftArm.cost + robot.torso.cost
       + robot.rightArm.cost + robot.base.cost;
-      this.cart.push({ ...robot, cost });
+      this.$store.commit('addRobotToCart', { ...robot, cost });
+      this.addedToCart = true;
     },
   },
 };
@@ -126,14 +116,6 @@ export default {
   font-size: 16px;
   width: 210px;
   padding: 3px;
-}
-td, th {
-  text-align: left;
-  padding: 5px;
-  padding-right: 20px;
-}
-.cost {
-  text-align: right;
 }
 .sale-border{
   border: 3px solid red;
