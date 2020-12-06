@@ -1,6 +1,6 @@
 <template>
 <!-- eslint-disable -->
-  <div class="content">
+  <div v-if="availableParts"class="content">
     <div class="preview">
       <CollapsibleSection>
         <div class="preview-content">
@@ -34,12 +34,15 @@
 </template>
 
 <script>
-import availableParts from '../data/parts';
+import { mapActions } from 'vuex';
 import PartSelector from './PartSelector.vue';
 import CollapsibleSection from '../shared/CollapsibleSection.vue';
 
 export default {
   name: 'RobotBuilder',
+  created() {
+    this.getParts();
+  },
   beforeRouteLeave(to, from, next) {
     if (this.addedToCart) {
       next(true);
@@ -53,7 +56,6 @@ export default {
   components: { PartSelector, CollapsibleSection },
   data() {
     return {
-      availableParts,
       addedToCart: false,
       cart: [],
       selectedRobot: {
@@ -66,16 +68,20 @@ export default {
     };
   },
   computed: {
+    availableParts() {
+      return this.$store.state.robots.parts;
+    },
     saleBorderClass() {
       return this.selectedRobot.head.onSale ? 'sale-border' : '';
     },
   },
   methods: {
+    ...mapActions('robots', ['getParts', 'addRobotToCart']),
     addToCart() {
       const robot = this.selectedRobot;
       const cost = robot.head.cost + robot.leftArm.cost + robot.torso.cost
       + robot.rightArm.cost + robot.base.cost;
-      this.$store.commit('addRobotToCart', { ...robot, cost });
+      this.addRobotToCart({ ...robot, cost }).then(() => this.$router.push('/cart'));
       this.addedToCart = true;
     },
   },
